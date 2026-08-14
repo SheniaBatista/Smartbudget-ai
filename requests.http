@@ -1,0 +1,236 @@
+@host = http://localhost:8081
+@api = {{host}}/api/v1
+
+### Criar despesa
+POST {{api}}/transactions
+Content-Type: application/json
+
+{
+  "description": "Supermercado",
+  "amount": 500.00,
+  "type": "EXPENSE",
+  "category": "FOOD"
+}
+
+### Criar despesa com data especifica
+POST {{api}}/transactions
+Content-Type: application/json
+
+{
+  "description": "Uber para o aeroporto",
+  "amount": 89.90,
+  "type": "EXPENSE",
+  "category": "TRANSPORT",
+  "occurredAt": "2026-08-10"
+}
+
+### Criar receita
+POST {{api}}/transactions
+Content-Type: application/json
+
+{
+  "description": "Salario",
+  "amount": 5000.00,
+  "type": "INCOME",
+  "category": "SALARY"
+}
+
+### Listar transacoes
+GET {{api}}/transactions
+
+### Listar com filtros
+GET {{api}}/transactions?type=EXPENSE&category=FOOD&limit=10
+
+### Listar por periodo
+GET {{api}}/transactions?from=2026-08-01&to=2026-08-31
+
+### Buscar por id
+GET {{api}}/transactions/00000000-0000-0000-0000-000000000000
+
+### Remover
+DELETE {{api}}/transactions/00000000-0000-0000-0000-000000000000
+
+### Saldo geral
+GET {{api}}/finance/balance
+
+### Saldo de um periodo
+GET {{api}}/finance/balance?from=2026-08-01&to=2026-08-31
+
+### Resumo mensal do mes atual
+GET {{api}}/finance/summary
+
+### Resumo mensal de um mes especifico
+GET {{api}}/finance/summary?month=2026-08
+
+### Despesas por categoria
+GET {{api}}/finance/expenses-by-category?from=2026-08-01&to=2026-08-31
+
+### Assistente: registrar despesa
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Registre uma despesa de 85 reais com Uber"
+}
+
+### Assistente: registrar receita
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Adicione uma receita de 5000 reais referente ao salario"
+}
+
+### Assistente: linguagem informal
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Gastei 45 reais no McDonalds"
+}
+
+### Assistente: consultar saldo
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Qual e o meu saldo?"
+}
+
+### Assistente: gasto por categoria
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Quanto eu gastei com transporte?"
+}
+
+### Assistente: gasto do dia
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Quanto eu gastei hoje?"
+}
+
+### Assistente: onde mais gastou
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Onde eu mais gastei neste mes?"
+}
+
+### Assistente: maior despesa
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Qual foi a minha maior despesa?"
+}
+
+### Assistente: ultimas transacoes
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Mostre minhas ultimas transacoes"
+}
+
+### Assistente: resumo mensal
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Faca um resumo financeiro deste mes"
+}
+
+### Assistente: informacao incompleta, deve perguntar o valor
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "Registre uma despesa de Uber"
+}
+
+### Assistente por voz, resposta em JSON com audio em Base64
+POST {{api}}/assistant/audio
+Content-Type: multipart/form-data; boundary=SmartBudgetBoundary
+
+--SmartBudgetBoundary
+Content-Disposition: form-data; name="file"; filename="comando.mp3"
+Content-Type: audio/mpeg
+
+< ./src/test/resources/audio/comando-4-gasto-categoria.mp3
+--SmartBudgetBoundary--
+
+### Assistente por voz, resposta em MP3
+POST {{api}}/assistant/audio
+Accept: audio/mpeg
+Content-Type: multipart/form-data; boundary=SmartBudgetBoundary
+
+--SmartBudgetBoundary
+Content-Disposition: form-data; name="file"; filename="comando.mp3"
+Content-Type: audio/mpeg
+
+< ./src/test/resources/audio/comando-4-gasto-categoria.mp3
+--SmartBudgetBoundary--
+
+### Assistente por voz, sem sintese de voz
+POST {{api}}/assistant/audio?speak=false
+Content-Type: multipart/form-data; boundary=SmartBudgetBoundary
+
+--SmartBudgetBoundary
+Content-Disposition: form-data; name="file"; filename="comando.mp3"
+Content-Type: audio/mpeg
+
+< ./src/test/resources/audio/comando-4-gasto-categoria.mp3
+--SmartBudgetBoundary--
+
+### Erro: valor zero
+POST {{api}}/transactions
+Content-Type: application/json
+
+{
+  "description": "Uber",
+  "amount": 0,
+  "type": "EXPENSE",
+  "category": "TRANSPORT"
+}
+
+### Erro: descricao vazia
+POST {{api}}/transactions
+Content-Type: application/json
+
+{
+  "description": "   ",
+  "amount": 50,
+  "type": "EXPENSE",
+  "category": "TRANSPORT"
+}
+
+### Erro: data futura
+POST {{api}}/transactions
+Content-Type: application/json
+
+{
+  "description": "Compra futura",
+  "amount": 50,
+  "type": "EXPENSE",
+  "category": "SHOPPING",
+  "occurredAt": "2099-01-01"
+}
+
+### Erro: transacao inexistente
+GET {{api}}/transactions/11111111-2222-3333-4444-555555555555
+
+### Erro: mes em formato invalido
+GET {{api}}/finance/summary?month=agosto
+
+### Erro: mensagem vazia
+POST {{api}}/assistant/message
+Content-Type: application/json
+
+{
+  "message": "   "
+}

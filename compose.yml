@@ -1,0 +1,21 @@
+services:
+  database:
+    image: mysql:9.6
+    container_name: smartbudget-mysql
+    environment:
+      MYSQL_DATABASE: smart_budget
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    ports:
+      - "${SMARTBUDGET_DB_PORT:-3308}:3306"
+    volumes:
+      - smart_budget_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uapp", "-papp" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  smart_budget_data:
