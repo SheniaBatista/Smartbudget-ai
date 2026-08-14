@@ -565,7 +565,7 @@ As agregações são verificadas separadamente contra um banco real em `Transact
 
 ## Aprendizados
 
-O trabalho mais delicado não foi integrar o modelo, e sim delimitar o que ele não deve fazer. Com liberdade para "resumir os gastos", o modelo passa a somar valores por conta própria, e os totais às vezes batem — o que é pior do que errar sempre, porque dá aparência de funcionamento. A correção foi arquitetural: mover cada cálculo para SQL, devolver o resultado pronto e formatado, e reduzir o papel do modelo a narrar.
+O trabalho mais delicado não foi integrar o modelo, e sim delimitar o que ele não deve fazer. Com liberdade para "resumir os gastos", o modelo passa a somar valores por conta própria, e os totais às vezes batem, o que é pior do que errar sempre, porque dá aparência de funcionamento. A correção foi arquitetural: mover cada cálculo para SQL, devolver o resultado pronto e formatado, e reduzir o papel do modelo a narrar.
 
 Trabalhar com uma versão milestone do Spring AI exigiu verificar a API nos próprios artefatos com `javap`, em vez de confiar em material que descreve versões anteriores. Foi assim que ficou claro que a transcrição usa `TranscriptionModel` e a síntese usa `TextToSpeechModel`, abstrações portáveis e não as classes específicas do provedor.
 
