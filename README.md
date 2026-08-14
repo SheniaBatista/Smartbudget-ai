@@ -598,4 +598,6 @@ Usar `BigDecimal` para dinheiro é a parte simples; o que exige atenção é nor
 
 ## Licença
 
+Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para o texto completo.
+
 Projeto educacional desenvolvido para o desafio da trilha de Spring Boot da [Digital Innovation One](https://www.dio.me/).
