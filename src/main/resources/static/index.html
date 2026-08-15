@@ -1,333 +1,1096 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SmartBudget AI — Console</title>
-    <style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartBudget AI</title>
+<style>
+    :root {
+        color-scheme: light;
+        --paper: #fcfcfb;
+        --paper-2: #f4f3f0;
+        --paper-3: #ebeae6;
+        --rule: #e1e0d9;
+        --rule-soft: #ecebe5;
+        --ink: #0b0b0b;
+        --ink-2: #52514e;
+        --series: #2a78d6;
+        --positive: #006300;
+        --negative: #d03b3b;
+        --on-series: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
         :root {
-            --bg: #f6f7f9;
-            --panel: #ffffff;
-            --border: #e2e5ea;
-            --text: #1a1d21;
-            --muted: #6b7280;
-            --accent: #2563eb;
-            --user: #eef2ff;
-            --ai: #f0fdf4;
-            --danger: #dc2626;
-            --ok: #16a34a;
+            color-scheme: dark;
+            --paper: #131312;
+            --paper-2: #1c1c1a;
+            --paper-3: #262624;
+            --rule: #2c2c2a;
+            --rule-soft: #232321;
+            --ink: #ffffff;
+            --ink-2: #c3c2b7;
+            --series: #3987e5;
+            --positive: #0ca30c;
+            --negative: #e66767;
         }
+    }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #0f1115;
-                --panel: #171a20;
-                --border: #2a2f38;
-                --text: #e6e8eb;
-                --muted: #9aa3af;
-                --accent: #60a5fa;
-                --user: #1e2537;
-                --ai: #12241a;
-                --danger: #f87171;
-                --ok: #4ade80;
-            }
-        }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
 
-        * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
 
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.5;
-        }
+    .cols { font-variant-numeric: tabular-nums; }
 
-        .wrap { max-width: 780px; margin: 0 auto; padding: 24px 16px 60px; }
+    .eyebrow {
+        font-size: 0.66rem; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.13em; color: var(--ink-2);
+    }
 
-        header { margin-bottom: 20px; }
+    .bar-top-rule { height: 2px; background: var(--series); }
 
-        h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    header {
+        display: flex; align-items: center; gap: 11px;
+        padding: 18px 32px; border-bottom: 1px solid var(--rule);
+        position: sticky; top: 0; background: var(--paper); z-index: 40;
+    }
+    @media (max-width: 700px) { header { padding: 15px 20px; } }
 
-        .sub { color: var(--muted); font-size: 0.9rem; margin: 0; }
+    .glyph { width: 22px; height: 22px; flex: none; color: var(--series); }
+    .wordmark { font-size: 0.92rem; font-weight: 600; letter-spacing: -0.01em; }
+    .wordmark span { color: var(--ink-2); font-weight: 400; }
 
-        .status {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 0.8rem; color: var(--muted); margin-top: 8px;
-        }
+    .live { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 0.74rem; color: var(--ink-2); }
+    .pip { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-2); }
+    .pip.ok { background: var(--positive); }
+    .pip.err { background: var(--negative); }
 
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-        .dot.on { background: var(--ok); }
-        .dot.off { background: var(--danger); }
+    .shell { max-width: 1240px; margin: 0 auto; }
 
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
+    .band { padding: 42px 32px 0; }
+    @media (max-width: 700px) { .band { padding: 30px 20px 0; } }
 
-        .row { display: flex; gap: 8px; }
+    .headline { display: flex; align-items: flex-end; gap: 48px; flex-wrap: wrap; }
 
-        input[type=text] {
-            flex: 1; padding: 11px 13px; font-size: 0.95rem;
-            border: 1px solid var(--border); border-radius: 8px;
-            background: var(--bg); color: var(--text);
-        }
+    .figure-block { min-width: 0; }
+    .figure {
+        font-size: clamp(3.4rem, 8vw, 4.6rem);
+        font-weight: 450; letter-spacing: -0.045em; line-height: 0.95;
+        margin-top: 10px; font-variant-numeric: lining-nums;
+    }
+    .figure.down { color: var(--negative); }
+    .figure-note { font-size: 0.8rem; color: var(--ink-2); margin-top: 12px; }
 
-        input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .flows { display: flex; gap: 40px; margin-left: auto; padding-bottom: 6px; }
+    @media (max-width: 700px) { .flows { margin-left: 0; gap: 30px; } }
+    .flow .eyebrow { display: block; margin-bottom: 7px; }
+    .flow-value { font-size: 1.24rem; font-weight: 500; letter-spacing: -0.025em; }
+    .flow-value::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: 2px; }
+    .flow.in .flow-value::before { background: var(--positive); }
+    .flow.out .flow-value::before { background: var(--negative); }
 
-        button {
-            padding: 11px 18px; font-size: 0.95rem; font-weight: 500;
-            border: 0; border-radius: 8px; cursor: pointer;
-            background: var(--accent); color: #fff;
-        }
+    .plot { margin-top: 30px; position: relative; }
+    .plot svg { display: block; width: 100%; height: 180px; overflow: visible; }
+    .plot-axis {
+        display: flex; justify-content: space-between;
+        font-size: 0.7rem; color: var(--ink-2); padding-top: 9px;
+        border-top: 1px solid var(--rule); margin-top: 4px;
+    }
 
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .split {
+        display: grid; grid-template-columns: minmax(0, 1fr) 400px;
+        gap: 0; margin-top: 46px; border-top: 1px solid var(--rule);
+    }
+    @media (max-width: 1020px) { .split { grid-template-columns: minmax(0, 1fr); } }
 
-        button.mic { width: 100%; padding: 16px; font-size: 1.05rem; }
-        button.mic.rec { background: var(--danger); }
+    .left { padding: 0 32px 60px; border-right: 1px solid var(--rule); }
+    @media (max-width: 1020px) { .left { border-right: 0; padding-bottom: 30px; } }
+    @media (max-width: 700px) { .left { padding: 0 20px 40px; } }
 
-        .hint { font-size: 0.82rem; color: var(--muted); margin: 10px 0 0; }
+    section { padding-top: 34px; }
+    section + section { margin-top: 34px; border-top: 1px solid var(--rule-soft); }
+    .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+    .sec-head .count { margin-left: auto; font-size: 0.72rem; color: var(--ink-2); }
 
-        .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .rank { display: flex; flex-direction: column; gap: 3px; }
+    .rank-row { padding: 9px 10px; margin: 0 -10px; border-radius: 5px; }
+    .rank-row:hover, .rank-row:focus-visible { background: var(--paper-2); outline: none; }
+    .rank-line { display: flex; align-items: baseline; gap: 14px; margin-bottom: 9px; }
+    .rank-name { font-size: 0.92rem; font-weight: 500; letter-spacing: -0.005em; }
+    .rank-amt { margin-left: auto; font-size: 0.9rem; }
+    .rank-pct { font-size: 0.78rem; color: var(--ink-2); min-width: 46px; text-align: right; }
+    .rank-track { height: 3px; background: var(--rule-soft); }
+    .rank-fill { height: 3px; background: var(--series); width: 0; transition: width .75s cubic-bezier(.2,.85,.3,1); }
 
-        .chip {
-            font-size: 0.8rem; padding: 5px 10px; border-radius: 999px;
-            border: 1px solid var(--border); background: transparent;
-            color: var(--muted); cursor: pointer; font-weight: 400;
-        }
+    table { width: 100%; border-collapse: collapse; font-size: 0.89rem; }
+    thead th {
+        text-align: left; padding: 0 0 11px; border-bottom: 1px solid var(--rule);
+        font-size: 0.66rem; font-weight: 600; text-transform: uppercase;
+        letter-spacing: 0.13em; color: var(--ink-2);
+    }
+    tbody td { padding: 13px 0; border-bottom: 1px solid var(--rule-soft); }
+    tbody tr:last-child td { border-bottom: 0; }
+    th.r, td.r { text-align: right; }
+    .cat { font-size: 0.82rem; color: var(--ink-2); }
+    .in { color: var(--positive); }
+    .out { color: var(--ink); }
 
-        .chip:hover { color: var(--text); border-color: var(--accent); }
+    .aside { display: flex; flex-direction: column; height: calc(100vh - 61px); position: sticky; top: 61px; }
+    @media (max-width: 1020px) { .aside { position: static; height: 640px; border-top: 1px solid var(--rule); } }
 
-        .msg { padding: 12px 14px; border-radius: 10px; margin-bottom: 10px; }
-        .msg.user { background: var(--user); }
-        .msg.ai { background: var(--ai); }
-        .msg.err { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
-        .who { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
-        .msg p { margin: 0; white-space: pre-wrap; }
-        .heard { font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 6px; }
-        audio { width: 100%; margin-top: 10px; }
-        .empty { color: var(--muted); font-size: 0.9rem; text-align: center; padding: 24px 0; }
-    </style>
+    .aside-head { padding: 20px 26px 16px; border-bottom: 1px solid var(--rule); }
+    .aside-head .sub { font-size: 0.76rem; color: var(--ink-2); margin-top: 3px; }
+
+    .thread { flex: 1; overflow-y: auto; padding: 22px 26px; display: flex; flex-direction: column; gap: 22px; }
+    .thread::-webkit-scrollbar { width: 7px; }
+    .thread::-webkit-scrollbar-thumb { background: var(--paper-3); }
+
+    .turn { display: flex; flex-direction: column; gap: 6px; animation: rise .28s cubic-bezier(.2,.85,.3,1); }
+    @keyframes rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .turn .speaker { font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.13em; color: var(--ink-2); }
+    .turn .say { font-size: 0.9rem; line-height: 1.62; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .turn.me { padding-left: 13px; border-left: 2px solid var(--series); }
+    .turn.me .speaker { color: var(--series); }
+    .turn.bad .say { color: var(--negative); }
+
+    .aside-transcript {
+        margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--rule-soft);
+        font-size: 0.79rem; color: var(--ink-2);
+    }
+    audio { width: 100%; margin-top: 12px; height: 32px; }
+
+    .dots { display: inline-flex; gap: 4px; padding: 5px 0; }
+    .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-2); animation: blink 1.3s infinite; }
+    .dots i:nth-child(2) { animation-delay: .18s; }
+    .dots i:nth-child(3) { animation-delay: .36s; }
+    @keyframes blink { 0%, 60%, 100% { opacity: .22; } 30% { opacity: 1; } }
+
+    .composer { border-top: 1px solid var(--rule); padding: 16px 26px 22px; }
+    .suggest { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 13px; }
+    .sug {
+        font-family: inherit; font-size: 0.76rem; padding: 5px 10px;
+        border: 1px solid var(--rule); background: transparent; color: var(--ink-2);
+        cursor: pointer; border-radius: 3px; transition: all .14s ease;
+    }
+    .sug:hover { color: var(--ink); border-color: var(--ink-2); }
+
+    .field { display: flex; align-items: center; gap: 10px; border-bottom: 1.5px solid var(--ink); padding-bottom: 9px; transition: border-color .15s ease; }
+    .field:focus-within { border-color: var(--series); }
+    input[type=text] {
+        flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink);
+        font-family: inherit; font-size: 0.94rem; padding: 2px 0;
+    }
+    input[type=text]:focus { outline: none; }
+    input[type=text]::placeholder { color: var(--ink-2); opacity: .7; }
+
+    .act {
+        font-family: inherit; border: 0; background: transparent; cursor: pointer;
+        color: var(--ink-2); display: grid; place-items: center; padding: 4px;
+        transition: color .14s ease, transform .12s ease;
+    }
+    .act:hover { color: var(--ink); }
+    .act:active { transform: scale(.9); }
+    .act:disabled { opacity: .35; cursor: not-allowed; }
+    .act svg { width: 19px; height: 19px; }
+    .act.send { color: var(--series); }
+    .act.rec { color: var(--negative); }
+
+    .recording { display: none; align-items: center; gap: 12px; margin-bottom: 13px; }
+    .recording.on { display: flex; }
+    .recording canvas { flex: 1; height: 24px; display: block; }
+    .recording .clock { font-size: 0.76rem; color: var(--negative); font-variant-numeric: tabular-nums; }
+
+    .blank { padding: 8px 0 18px; }
+    .blank h3 { margin: 0 0 8px; font-size: 1.06rem; font-weight: 500; letter-spacing: -0.02em; }
+    .blank p { margin: 0 0 20px; font-size: 0.88rem; color: var(--ink-2); max-width: 52ch; line-height: 1.6; }
+    .starts { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+    .start {
+        font-family: inherit; font-size: 0.88rem; padding: 10px 0; width: 100%;
+        text-align: left; border: 0; border-top: 1px solid var(--rule-soft);
+        background: transparent; color: var(--ink); cursor: pointer;
+        display: flex; align-items: center; gap: 11px; transition: color .14s ease;
+    }
+    .start:last-child { border-bottom: 1px solid var(--rule-soft); }
+    .start:hover { color: var(--series); }
+    .start .chev { color: var(--ink-2); font-size: 0.85rem; }
+    .start:hover .chev { color: var(--series); }
+
+    .quiet { font-size: 0.86rem; color: var(--ink-2); padding: 6px 0 2px; }
+
+    .tip {
+        position: fixed; z-index: 70; pointer-events: none; opacity: 0;
+        transform: translate(-50%, -100%); transition: opacity .11s ease;
+        background: var(--ink); color: var(--paper);
+        padding: 9px 12px; min-width: 132px; border-radius: 4px;
+    }
+    .tip.on { opacity: 1; }
+    .tip .v { font-size: 0.96rem; font-weight: 600; letter-spacing: -0.02em; }
+    .tip .n { font-size: 0.74rem; opacity: .72; margin-top: 2px; }
+    .tip .s { font-size: 0.72rem; opacity: .58; margin-top: 3px; }
+
+    .loading { color: transparent; background: var(--paper-2); border-radius: 3px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+
+    footer { padding: 26px 32px 40px; border-top: 1px solid var(--rule); font-size: 0.76rem; color: var(--ink-2); }
+    @media (max-width: 700px) { footer { padding: 22px 20px 32px; } }
+
+    .help-btn {
+        font-family: inherit; font-size: 0.76rem; color: var(--ink-2);
+        background: transparent; border: 1px solid var(--rule); border-radius: 3px;
+        padding: 5px 11px; cursor: pointer; transition: all .14s ease;
+    }
+    .help-btn:hover { color: var(--ink); border-color: var(--ink-2); }
+
+    .veil {
+        position: fixed; inset: 0; z-index: 80; display: none;
+        background: rgba(11, 11, 11, .42); backdrop-filter: blur(2px);
+        padding: 5vh 20px; overflow-y: auto;
+    }
+    .veil.on { display: block; }
+
+    .sheet {
+        max-width: 760px; margin: 0 auto; background: var(--paper);
+        border: 1px solid var(--rule); animation: lift .22s cubic-bezier(.2,.85,.3,1);
+    }
+    @keyframes lift { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+    .sheet-head {
+        display: flex; align-items: baseline; gap: 14px;
+        padding: 24px 30px 20px; border-bottom: 1px solid var(--rule);
+        position: sticky; top: 0; background: var(--paper);
+    }
+    .sheet-head h2 { margin: 0; font-size: 1.16rem; font-weight: 600; letter-spacing: -0.025em; }
+    .sheet-head .close {
+        margin-left: auto; background: transparent; border: 0; cursor: pointer;
+        color: var(--ink-2); font-family: inherit; font-size: 0.78rem; padding: 4px 8px;
+    }
+    .sheet-head .close:hover { color: var(--ink); }
+
+    .sheet-body { padding: 6px 30px 34px; }
+    @media (max-width: 640px) { .sheet-head, .sheet-body { padding-left: 20px; padding-right: 20px; } }
+
+    .sheet-body section { padding-top: 26px; }
+    .sheet-body section + section { margin-top: 26px; border-top: 1px solid var(--rule-soft); }
+    .sheet-body h3 { margin: 0 0 12px; font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.13em; color: var(--ink-2); }
+    .sheet-body p { margin: 0 0 12px; font-size: 0.89rem; line-height: 1.65; color: var(--ink); }
+    .sheet-body p.soft { color: var(--ink-2); }
+
+    .flowline { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; font-size: 0.79rem; color: var(--ink-2); margin: 4px 0 14px; }
+    .flowline b { font-weight: 500; color: var(--ink); }
+    .flowline .sep { color: var(--series); }
+
+    .askrow { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px; padding: 9px 0; border-top: 1px solid var(--rule-soft); font-size: 0.85rem; }
+    .askrow:last-child { border-bottom: 1px solid var(--rule-soft); }
+    @media (max-width: 560px) { .askrow { grid-template-columns: 1fr; gap: 3px; } }
+    .askrow .q { color: var(--ink); }
+    .askrow .t { color: var(--ink-2); font-size: 0.8rem; }
+
+    .kbd {
+        display: inline-block; padding: 1px 6px; border: 1px solid var(--rule);
+        border-bottom-width: 2px; border-radius: 3px; font-size: 0.75rem;
+        font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; color: var(--ink-2);
+    }
+
+    .endpoints { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.79rem; line-height: 1.9; color: var(--ink-2); }
+    .endpoints b { color: var(--ink); font-weight: 500; }
+
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <header>
-        <h1>SmartBudget AI</h1>
-        <p class="sub">Console de demonstração — fale ou escreva um comando financeiro.</p>
-        <div class="status"><span class="dot" id="dot"></span><span id="statusText">verificando API…</span></div>
-    </header>
 
-    <div class="panel">
-        <button class="mic" id="micBtn">🎙️ Gravar comando de voz</button>
-        <p class="hint" id="micHint">Clique, fale e clique de novo para enviar. O navegador vai pedir permissão do microfone.</p>
+<div class="bar-top-rule"></div>
+
+<header>
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17l5-5 4 3 8-8"></path><path d="M15 7h5v5"></path>
+    </svg>
+    <div class="wordmark">SmartBudget <span>AI</span></div>
+    <div class="live">
+        <span class="pip" id="pip"></span><span id="pipText">conectando</span>
+        <button class="help-btn" id="helpBtn" style="margin-left:10px">Como usar</button>
     </div>
+</header>
 
-    <div class="panel">
-        <div class="row">
-            <input type="text" id="txt" placeholder="Ex.: Registre uma despesa de 85 reais com Uber" autocomplete="off">
-            <button id="sendBtn">Enviar</button>
+<div class="veil" id="veil" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="sheet">
+        <div class="sheet-head">
+            <h2 id="helpTitle">Como usar</h2>
+            <button class="close" id="helpClose">Fechar &nbsp;<span class="kbd">Esc</span></button>
         </div>
-        <div class="examples" id="examples"></div>
+        <div class="sheet-body">
+
+            <section>
+                <h3>O que acontece quando você pede algo</h3>
+                <p>Você escreve ou fala em português. O modelo de linguagem interpreta a intenção e escolhe qual ferramenta da aplicação chamar. A ferramenta executa o caso de uso real, que grava ou consulta o MySQL. O resultado volta para o modelo, que o transforma em texto.</p>
+                <div class="flowline">
+                    <b>você</b><span class="sep">→</span><b>transcrição</b><span class="sep">→</span><b>modelo</b><span class="sep">→</span><b>ferramenta</b><span class="sep">→</span><b>caso de uso</b><span class="sep">→</span><b>MySQL</b><span class="sep">→</span><b>resposta</b>
+                </div>
+                <p class="soft">O modelo não calcula nada. Somas, saldos e percentuais são resolvidos em SQL e chegam prontos até ele.</p>
+            </section>
+
+            <section>
+                <h3>Registrar dinheiro</h3>
+                <div class="askrow"><span class="q">Registre uma despesa de 85 reais com Uber</span><span class="t">grava despesa · Transporte</span></div>
+                <div class="askrow"><span class="q">Gastei 45 reais no McDonalds</span><span class="t">deduz que é despesa · Alimentação</span></div>
+                <div class="askrow"><span class="q">Recebi meu salário de 5000 reais</span><span class="t">deduz que é receita · Salário</span></div>
+                <div class="askrow"><span class="q">Paguei 1580 de aluguel no dia 05</span><span class="t">entende a data informada</span></div>
+            </section>
+
+            <section>
+                <h3>Consultar</h3>
+                <div class="askrow"><span class="q">Qual é o meu saldo?</span><span class="t">receitas menos despesas</span></div>
+                <div class="askrow"><span class="q">Quanto eu gastei hoje?</span><span class="t">total do dia</span></div>
+                <div class="askrow"><span class="q">Quanto gastei com alimentação?</span><span class="t">total da categoria</span></div>
+                <div class="askrow"><span class="q">Onde eu mais gastei neste mês?</span><span class="t">distribuição por categoria</span></div>
+                <div class="askrow"><span class="q">Qual foi a minha maior despesa?</span><span class="t">maior lançamento do período</span></div>
+                <div class="askrow"><span class="q">Mostre minhas últimas transações</span><span class="t">extrato recente</span></div>
+                <div class="askrow"><span class="q">Faça um resumo financeiro deste mês</span><span class="t">receitas, despesas, saldo, maior gasto e categorias</span></div>
+            </section>
+
+            <section>
+                <h3>Falar em vez de escrever</h3>
+                <p>Toque no ícone de microfone à esquerda do campo e autorize o navegador. Enquanto você fala, as barras mostram o áudio sendo captado. Toque de novo para enviar.</p>
+                <p class="soft">A resposta traz a transcrição do que foi entendido e um áudio para tocar. Se algo sair errado, a transcrição mostra se o problema foi na escuta ou na interpretação.</p>
+            </section>
+
+            <section>
+                <h3>O que ele não faz</h3>
+                <p>Não inventa valores. Peça <span class="kbd">Registre uma despesa de Uber</span> sem dizer quanto foi: em vez de chutar um número, ele pergunta o valor, e nada é gravado no banco.</p>
+                <p class="soft">Também não afirma que registrou algo se a operação falhou, e não usa dados que não existam no banco.</p>
+            </section>
+
+            <section>
+                <h3>Categorias disponíveis</h3>
+                <p class="soft">Alimentação · Transporte · Moradia · Saúde · Educação · Lazer · Compras · Salário · Investimentos · Outros</p>
+            </section>
+
+            <section>
+                <h3>Atalhos</h3>
+                <p class="soft"><span class="kbd">Enter</span> envia a mensagem &nbsp;·&nbsp; <span class="kbd">Esc</span> fecha esta ajuda &nbsp;·&nbsp; passe o mouse sobre o gráfico ou sobre as categorias para ver os valores</p>
+            </section>
+
+            <section>
+                <h3>Para quem for avaliar</h3>
+                <p>A aplicação funciona por completo sem a IA. Estes endpoints REST atendem o mesmo domínio:</p>
+                <div class="endpoints">
+                    <b>POST</b> /api/v1/transactions<br>
+                    <b>GET</b> &nbsp;/api/v1/transactions<br>
+                    <b>GET</b> &nbsp;/api/v1/finance/balance<br>
+                    <b>GET</b> &nbsp;/api/v1/finance/summary<br>
+                    <b>POST</b> /api/v1/assistant/message<br>
+                    <b>POST</b> /api/v1/assistant/audio
+                </div>
+                <p class="soft" style="margin-top:12px">O arquivo <span class="kbd">requests.http</span> na raiz do projeto traz a coleção completa. Os testes automatizados rodam com <span class="kbd">gradlew test</span>, sem Docker e sem chave da OpenAI.</p>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+<div class="shell">
+    <div class="band" id="band">
+        <div class="headline">
+            <div class="figure-block">
+                <span class="eyebrow">Saldo atual</span>
+                <div class="figure loading" id="figure">R$ 0,00</div>
+                <div class="figure-note" id="figureNote">&nbsp;</div>
+            </div>
+            <div class="flows">
+                <div class="flow in">
+                    <span class="eyebrow">Receitas</span>
+                    <div class="flow-value" id="flowIn">—</div>
+                </div>
+                <div class="flow out">
+                    <span class="eyebrow">Despesas</span>
+                    <div class="flow-value" id="flowOut">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="plot" id="plot">
+            <svg id="chart" role="img" aria-label="Evolução do saldo acumulado no mês"></svg>
+        </div>
+        <div class="plot-axis"><span id="axisFrom"></span><span id="axisTo"></span></div>
     </div>
 
-    <div id="log"><div class="empty">Nenhuma interação ainda.</div></div>
+    <div class="split">
+        <div class="left">
+            <section>
+                <div class="sec-head">
+                    <span class="eyebrow">Onde o dinheiro foi</span>
+                    <span class="count" id="rankMeta"></span>
+                </div>
+                <div id="ranking"><div class="quiet">carregando</div></div>
+            </section>
+
+            <section>
+                <div class="sec-head">
+                    <span class="eyebrow">Movimentações</span>
+                    <span class="count" id="txMeta"></span>
+                </div>
+                <div id="ledger"><div class="quiet">carregando</div></div>
+            </section>
+        </div>
+
+        <aside class="aside">
+            <div class="aside-head">
+                <span class="eyebrow">Assistente</span>
+                <div class="sub">Escreva ou fale. As respostas saem do banco.</div>
+            </div>
+
+            <div class="thread" id="thread">
+                <div class="quiet" id="threadBlank">Nenhuma conversa ainda.</div>
+            </div>
+
+            <div class="composer">
+                <div class="recording" id="recording">
+                    <canvas id="wave" width="300" height="24"></canvas>
+                    <span class="clock" id="clock">0:00</span>
+                </div>
+                <div class="suggest" id="suggest"></div>
+                <div class="field">
+                    <button class="act" id="micBtn" title="Gravar comando de voz" aria-label="Gravar comando de voz">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><path d="M12 19v3"></path>
+                        </svg>
+                    </button>
+                    <input type="text" id="txt" placeholder="Registre uma despesa de 85 reais com Uber" autocomplete="off">
+                    <button class="act send" id="sendBtn" title="Enviar" aria-label="Enviar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 12h15"></path><path d="M13 6l6 6-6 6"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <footer>Cada número desta tela veio de uma consulta ao MySQL. O modelo interpreta o pedido e aciona as ferramentas da aplicação — ele não calcula valores.</footer>
+</div>
+
+<div class="tip" id="tip" role="tooltip" aria-hidden="true">
+    <div class="v" id="tipV"></div>
+    <div class="n" id="tipN"></div>
+    <div class="s" id="tipS"></div>
 </div>
 
 <script>
-    const API = '/api/v1';
-    const log = document.getElementById('log');
-    const txt = document.getElementById('txt');
-    const sendBtn = document.getElementById('sendBtn');
-    const micBtn = document.getElementById('micBtn');
-    const micHint = document.getElementById('micHint');
-    const dot = document.getElementById('dot');
-    const statusText = document.getElementById('statusText');
+const API = '/api/v1';
+const NS = 'http://www.w3.org/2000/svg';
+const el = id => document.getElementById(id);
 
-    const EXAMPLES = [
-        'Registre uma despesa de 85 reais com Uber',
+const thread = el('thread');
+const txt = el('txt');
+const sendBtn = el('sendBtn');
+const micBtn = el('micBtn');
+const tip = el('tip');
+
+const money = v => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const pct = v => Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+const dm = iso => iso.slice(8, 10) + '/' + iso.slice(5, 7);
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const mesPorExtenso = periodo => {
+    const [ano, mes] = periodo.split('-');
+    return MESES[Number(mes) - 1] + ' de ' + ano;
+};
+
+[
+    'Qual é o meu saldo?',
+    'Quanto gastei com alimentação?',
+    'Onde eu mais gastei neste mês?',
+    'Faça um resumo financeiro deste mês'
+].forEach(texto => {
+    const b = document.createElement('button');
+    b.className = 'sug';
+    b.type = 'button';
+    b.textContent = texto;
+    b.onclick = () => { txt.value = texto; txt.focus(); };
+    el('suggest').appendChild(b);
+});
+
+function setLive(state, label) {
+    el('pip').className = 'pip' + (state ? ' ' + state : '');
+    el('pipText').textContent = label;
+}
+
+function countUp(node, target, format) {
+    const from = Number(node.dataset.v || 0);
+    const to = Number(target);
+    node.dataset.v = to;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || from === to) {
+        node.textContent = format(to);
+        return;
+    }
+    const t0 = performance.now();
+    const step = now => {
+        const p = Math.min((now - t0) / 700, 1);
+        node.textContent = format(from + (to - from) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+}
+
+function tipAt(x, y, v, n, s) {
+    el('tipV').textContent = v;
+    el('tipN').textContent = n;
+    el('tipS').textContent = s;
+    tip.style.left = Math.round(x) + 'px';
+    tip.style.top = Math.round(y - 10) + 'px';
+    tip.classList.add('on');
+    tip.setAttribute('aria-hidden', 'false');
+}
+
+const tipOnEl = (target, v, n, s) => {
+    const b = target.getBoundingClientRect();
+    tipAt(b.left + b.width / 2, b.top, v, n, s);
+};
+
+function tipOff() {
+    tip.classList.remove('on');
+    tip.setAttribute('aria-hidden', 'true');
+}
+
+let first = true;
+
+async function load() {
+    try {
+        const [rb, rs, rt] = await Promise.all([
+            fetch(API + '/finance/balance'),
+            fetch(API + '/finance/summary'),
+            fetch(API + '/transactions?limit=200')
+        ]);
+        if (!rb.ok || !rs.ok || !rt.ok) throw new Error();
+
+        const balance = await rb.json();
+        const summary = await rs.json();
+        const all = await rt.json();
+
+        drawFigure(balance, summary);
+        all.length ? drawChart(all, summary) : drawBlank();
+        drawRanking(summary);
+        drawLedger(all.slice(0, 8));
+        setLive('ok', 'conectado');
+    } catch {
+        setLive('err', 'API indisponível');
+        el('figure').classList.remove('loading');
+    } finally {
+        first = false;
+    }
+}
+
+function drawFigure(balance, summary) {
+    const f = el('figure');
+    f.classList.remove('loading');
+    f.className = 'figure' + (Number(balance.netBalance) < 0 ? ' down' : '');
+    countUp(f, balance.netBalance, money);
+    countUp(el('flowIn'), balance.totalIncome, money);
+    countUp(el('flowOut'), balance.totalExpense, money);
+    el('figureNote').textContent = summary.transactionCount === 0
+        ? 'nenhuma transação registrada'
+        : summary.transactionCount + ' transações em ' + mesPorExtenso(summary.period);
+}
+
+function ensureChart() {
+    const plot = el('plot');
+    if (!el('chart')) {
+        plot.replaceChildren();
+        const svg = document.createElementNS(NS, 'svg');
+        svg.id = 'chart';
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', 'Evolução do saldo acumulado no mês');
+        plot.appendChild(svg);
+    }
+    return el('chart');
+}
+
+function drawBlank() {
+    const plot = el('plot');
+    plot.onpointermove = null;
+    plot.onpointerleave = null;
+    plot.replaceChildren();
+    el('axisFrom').textContent = '';
+    el('axisTo').textContent = '';
+
+    const box = document.createElement('div');
+    box.className = 'blank';
+
+    const h = document.createElement('h3');
+    h.textContent = 'Banco vazio, aplicação pronta';
+
+    const p = document.createElement('p');
+    p.textContent = 'Registre a primeira transação falando ou escrevendo em português. '
+        + 'O assistente interpreta o pedido, aciona a ferramenta correspondente e grava no MySQL.';
+
+    const list = document.createElement('div');
+    list.className = 'starts';
+    [
         'Recebi meu salário de 5000 reais',
-        'Gastei 45 reais no McDonalds',
-        'Qual é o meu saldo?',
-        'Quanto eu gastei com alimentação?',
-        'Onde eu mais gastei neste mês?',
-        'Faça um resumo financeiro deste mês'
-    ];
-
-    EXAMPLES.forEach(e => {
+        'Registre uma despesa de 85 reais com Uber',
+        'Gastei 45 reais no McDonalds'
+    ].forEach(comando => {
         const b = document.createElement('button');
-        b.className = 'chip';
-        b.textContent = e;
-        b.onclick = () => { txt.value = e; txt.focus(); };
-        document.getElementById('examples').appendChild(b);
+        b.className = 'start';
+        b.type = 'button';
+        const chev = document.createElement('span');
+        chev.className = 'chev';
+        chev.textContent = '→';
+        const label = document.createElement('span');
+        label.textContent = comando;
+        b.append(chev, label);
+        b.onclick = () => { txt.value = comando; txt.focus(); };
+        list.appendChild(b);
     });
 
-    function clearEmpty() {
-        const e = log.querySelector('.empty');
-        if (e) e.remove();
+    box.append(h, p, list);
+    plot.appendChild(box);
+}
+
+function drawChart(transactions, summary) {
+    const svg = ensureChart();
+    svg.replaceChildren();
+
+    const dentro = transactions
+        .filter(t => t.occurredAt >= summary.from && t.occurredAt <= summary.to)
+        .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt));
+
+    el('axisFrom').textContent = dm(summary.from);
+    el('axisTo').textContent = dm(summary.to);
+
+    if (dentro.length < 2) {
+        const nota = document.createElement('div');
+        nota.className = 'quiet';
+        nota.textContent = 'A evolução do saldo aparece a partir de duas datas com movimento.';
+        el('plot').replaceChildren(nota);
+        return;
     }
 
-    function addMessage(cls, who, text, heard, audioUrl) {
-        clearEmpty();
-        const div = document.createElement('div');
-        div.className = 'msg ' + cls;
-        div.innerHTML = '<div class="who"></div><p></p>';
-        div.querySelector('.who').textContent = who;
-        div.querySelector('p').textContent = text;
-        if (heard) {
-            const h = document.createElement('div');
-            h.className = 'heard';
-            h.textContent = '🎧 entendi: "' + heard + '"';
-            div.appendChild(h);
-        }
-        if (audioUrl) {
-            const a = document.createElement('audio');
-            a.controls = true;
-            a.src = audioUrl;
-            div.appendChild(a);
-            a.play().catch(() => {});
-        }
-        log.appendChild(div);
-        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        return div;
+    const porDia = new Map();
+    dentro.forEach(t => {
+        const d = (t.type === 'INCOME' ? 1 : -1) * Number(t.amount);
+        porDia.set(t.occurredAt, (porDia.get(t.occurredAt) || 0) + d);
+    });
+
+    let acc = 0;
+    const pts = [...porDia.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([data, d]) => { acc += d; return { data, v: acc }; });
+
+    const W = 1000, H = 180, top = 22, bottom = 6;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('preserveAspectRatio', 'none');
+
+    const vals = pts.map(p => p.v);
+    const min = Math.min(0, ...vals);
+    const max = Math.max(...vals);
+    const span = (max - min) || 1;
+    const X = i => (i / (pts.length - 1)) * W;
+    const Y = v => top + (1 - (v - min) / span) * (H - top - bottom);
+
+    const defs = document.createElementNS(NS, 'defs');
+    const g = document.createElementNS(NS, 'linearGradient');
+    g.setAttribute('id', 'wash');
+    g.setAttribute('x1', '0'); g.setAttribute('y1', '0'); g.setAttribute('x2', '0'); g.setAttribute('y2', '1');
+    const a = document.createElementNS(NS, 'stop');
+    a.setAttribute('offset', '0'); a.setAttribute('stop-color', 'var(--series)'); a.setAttribute('stop-opacity', '0.15');
+    const b = document.createElementNS(NS, 'stop');
+    b.setAttribute('offset', '1'); b.setAttribute('stop-color', 'var(--series)'); b.setAttribute('stop-opacity', '0');
+    g.append(a, b);
+    defs.appendChild(g);
+    svg.appendChild(defs);
+
+    [0, 1].forEach(f => {
+        const y = top + f * (H - top - bottom);
+        const l = document.createElementNS(NS, 'line');
+        l.setAttribute('x1', 0); l.setAttribute('x2', W); l.setAttribute('y1', y); l.setAttribute('y2', y);
+        l.setAttribute('stroke', 'var(--rule)'); l.setAttribute('stroke-width', '1');
+        l.setAttribute('vector-effect', 'non-scaling-stroke');
+        svg.appendChild(l);
+    });
+
+    const d = pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ');
+
+    const area = document.createElementNS(NS, 'path');
+    area.setAttribute('d', `${d} L${W},${H - bottom} L0,${H - bottom} Z`);
+    area.setAttribute('fill', 'url(#wash)');
+    svg.appendChild(area);
+
+    const line = document.createElementNS(NS, 'path');
+    line.setAttribute('d', d);
+    line.setAttribute('fill', 'none');
+    line.setAttribute('stroke', 'var(--series)');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-linejoin', 'round');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(line);
+
+    const last = pts.length - 1;
+    const ring = document.createElementNS(NS, 'circle');
+    ring.setAttribute('cx', X(last)); ring.setAttribute('cy', Y(pts[last].v));
+    ring.setAttribute('r', '6'); ring.setAttribute('fill', 'var(--paper)');
+    svg.appendChild(ring);
+    const dot = document.createElementNS(NS, 'circle');
+    dot.setAttribute('cx', X(last)); dot.setAttribute('cy', Y(pts[last].v));
+    dot.setAttribute('r', '4'); dot.setAttribute('fill', 'var(--series)');
+    svg.appendChild(dot);
+
+    const cross = document.createElementNS(NS, 'line');
+    cross.setAttribute('y1', 0); cross.setAttribute('y2', H);
+    cross.setAttribute('stroke', 'var(--ink-2)'); cross.setAttribute('stroke-width', '1');
+    cross.setAttribute('vector-effect', 'non-scaling-stroke'); cross.setAttribute('opacity', '0');
+    svg.appendChild(cross);
+
+    const focus = document.createElementNS(NS, 'circle');
+    focus.setAttribute('r', '4.5'); focus.setAttribute('fill', 'var(--series)');
+    focus.setAttribute('stroke', 'var(--paper)'); focus.setAttribute('stroke-width', '2');
+    focus.setAttribute('opacity', '0');
+    svg.appendChild(focus);
+
+    const plot = el('plot');
+    plot.onpointermove = ev => {
+        const box = plot.getBoundingClientRect();
+        const rel = (ev.clientX - box.left) / box.width;
+        const i = Math.max(0, Math.min(pts.length - 1, Math.round(rel * (pts.length - 1))));
+        const p = pts[i];
+        cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('opacity', '.35');
+        focus.setAttribute('cx', X(i)); focus.setAttribute('cy', Y(p.v)); focus.setAttribute('opacity', '1');
+        tipAt(box.left + (X(i) / W) * box.width, box.top + (Y(p.v) / H) * box.height,
+              money(p.v), 'Saldo acumulado', dm(p.data));
+    };
+    plot.onpointerleave = () => {
+        cross.setAttribute('opacity', '0');
+        focus.setAttribute('opacity', '0');
+        tipOff();
+    };
+}
+
+function drawRanking(summary) {
+    const host = el('ranking');
+    const list = summary.expensesByCategory || [];
+    el('rankMeta').textContent = list.length ? mesPorExtenso(summary.period) : '';
+    host.replaceChildren();
+
+    if (!list.length) {
+        const q = document.createElement('div');
+        q.className = 'quiet';
+        q.textContent = 'A distribuição por categoria aparece após a primeira despesa.';
+        host.appendChild(q);
+        return;
     }
 
-    async function readError(response) {
+    const max = Math.max(...list.map(c => Number(c.total)));
+    const rank = document.createElement('div');
+    rank.className = 'rank';
+
+    list.forEach((c, i) => {
+        const row = document.createElement('div');
+        row.className = 'rank-row';
+        row.tabIndex = 0;
+
+        const line = document.createElement('div');
+        line.className = 'rank-line';
+
+        const name = document.createElement('span');
+        name.className = 'rank-name';
+        name.textContent = c.categoryLabel;
+
+        const amt = document.createElement('span');
+        amt.className = 'rank-amt cols';
+        amt.textContent = money(c.total);
+
+        const share = document.createElement('span');
+        share.className = 'rank-pct cols';
+        share.textContent = pct(c.percentageOfExpenses);
+
+        line.append(name, amt, share);
+
+        const track = document.createElement('div');
+        track.className = 'rank-track';
+        const fill = document.createElement('div');
+        fill.className = 'rank-fill';
+        track.appendChild(fill);
+
+        row.append(line, track);
+
+        const alvo = Math.max(Number(c.total) / max * 100, 1) + '%';
+        requestAnimationFrame(() => setTimeout(() => { fill.style.width = alvo; }, i * 60));
+
+        const n = c.transactionCount;
+        const detalhe = n + (n === 1 ? ' transação' : ' transações');
+        row.addEventListener('pointerenter', e => tipOnEl(e.currentTarget, money(c.total), c.categoryLabel, detalhe));
+        row.addEventListener('focus', e => tipOnEl(e.currentTarget, money(c.total), c.categoryLabel, detalhe));
+        row.addEventListener('pointerleave', tipOff);
+        row.addEventListener('blur', tipOff);
+
+        rank.appendChild(row);
+    });
+
+    host.appendChild(rank);
+}
+
+function drawLedger(list) {
+    const host = el('ledger');
+    el('txMeta').textContent = list.length ? 'últimas ' + list.length : '';
+    host.replaceChildren();
+
+    if (!list.length) {
+        const q = document.createElement('div');
+        q.className = 'quiet';
+        q.textContent = 'As movimentações aparecem aqui após o primeiro registro.';
+        host.appendChild(q);
+        return;
+    }
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const hr = document.createElement('tr');
+    ['Descrição', 'Data', 'Valor'].forEach((t, i) => {
+        const th = document.createElement('th');
+        th.textContent = t;
+        if (i === 2) th.className = 'r';
+        hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+
+    const tbody = document.createElement('tbody');
+    list.forEach(t => {
+        const tr = document.createElement('tr');
+
+        const td1 = document.createElement('td');
+        const nome = document.createElement('div');
+        nome.textContent = t.description;
+        const cat = document.createElement('div');
+        cat.className = 'cat';
+        cat.textContent = t.categoryLabel;
+        td1.append(nome, cat);
+
+        const td2 = document.createElement('td');
+        td2.className = 'cols';
+        td2.style.color = 'var(--ink-2)';
+        td2.textContent = dm(t.occurredAt);
+
+        const td3 = document.createElement('td');
+        td3.className = 'r cols ' + (t.type === 'INCOME' ? 'in' : 'out');
+        td3.textContent = (t.type === 'INCOME' ? '+ ' : '− ') + money(t.amount);
+
+        tr.append(td1, td2, td3);
+        tbody.appendChild(tr);
+    });
+
+    table.append(thead, tbody);
+    host.appendChild(table);
+}
+
+function turn(kind, speaker, text) {
+    const blank = el('threadBlank');
+    if (blank) blank.remove();
+
+    const wrap = document.createElement('div');
+    wrap.className = 'turn ' + kind;
+
+    const who = document.createElement('div');
+    who.className = 'speaker';
+    who.textContent = speaker;
+
+    const say = document.createElement('div');
+    say.className = 'say';
+    if (text === null) {
+        const d = document.createElement('span');
+        d.className = 'dots';
+        d.append(document.createElement('i'), document.createElement('i'), document.createElement('i'));
+        say.appendChild(d);
+    } else {
+        say.textContent = text;
+    }
+
+    wrap.append(who, say);
+    thread.appendChild(wrap);
+    thread.scrollTop = thread.scrollHeight;
+    return { wrap, say };
+}
+
+function resolve(node, text, failed) {
+    node.say.textContent = text;
+    if (failed) node.wrap.classList.add('bad');
+    thread.scrollTop = thread.scrollHeight;
+}
+
+async function errText(r) {
+    try { return (await r.json()).message || ('Erro ' + r.status); }
+    catch { return 'Erro ' + r.status; }
+}
+
+const lock = on => { sendBtn.disabled = on; micBtn.disabled = on; };
+
+async function send() {
+    const message = txt.value.trim();
+    if (!message) return;
+
+    turn('me', 'Você', message);
+    txt.value = '';
+    lock(true);
+    const pending = turn('ai', 'SmartBudget AI', null);
+
+    try {
+        const r = await fetch(API + '/assistant/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        if (!r.ok) throw new Error(await errText(r));
+        resolve(pending, (await r.json()).message);
+        load();
+    } catch (e) {
+        resolve(pending, e.message, true);
+    } finally {
+        lock(false);
+        txt.focus();
+    }
+}
+
+sendBtn.onclick = send;
+txt.onkeydown = e => { if (e.key === 'Enter') send(); };
+
+let recorder = null, chunks = [], clockId = null, actx = null, waveId = null;
+const extFor = t => t.includes('ogg') ? 'ogg' : t.includes('mp4') ? 'mp4' : 'webm';
+
+function startWave(stream) {
+    const canvas = el('wave');
+    const ctx = canvas.getContext('2d');
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const an = actx.createAnalyser();
+    an.fftSize = 512;
+    actx.createMediaStreamSource(stream).connect(an);
+
+    const buf = new Uint8Array(an.frequencyBinCount);
+    const cor = getComputedStyle(document.body).getPropertyValue('--negative').trim();
+    const N = 48;
+
+    const draw = () => {
+        waveId = requestAnimationFrame(draw);
+        an.getByteFrequencyData(buf);
+        const w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = cor;
+        const passo = Math.floor(buf.length / N);
+        const bw = Math.max(2, w / N - 2);
+        for (let i = 0; i < N; i++) {
+            let soma = 0;
+            for (let j = 0; j < passo; j++) soma += buf[i * passo + j];
+            const alt = Math.max(2, (soma / passo / 255) * h);
+            ctx.fillRect(i * (w / N), (h - alt) / 2, bw, alt);
+        }
+    };
+    draw();
+}
+
+function stopWave() {
+    if (waveId) cancelAnimationFrame(waveId);
+    waveId = null;
+    if (actx) { actx.close().catch(() => {}); actx = null; }
+}
+
+micBtn.onclick = async () => {
+    if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
+
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+        turn('ai bad', 'Navegador', 'Este navegador não suporta gravação. Use Chrome ou Edge.');
+        return;
+    }
+
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch {
+        turn('ai bad', 'Navegador', 'Permissão de microfone negada. Libere o acesso e tente de novo.');
+        return;
+    }
+
+    chunks = [];
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+    recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        clearInterval(clockId);
+        stopWave();
+        el('recording').classList.remove('on');
+        micBtn.classList.remove('rec');
+        lock(true);
+
+        const type = recorder.mimeType || 'audio/webm';
+        const form = new FormData();
+        form.append('file', new Blob(chunks, { type }), 'comando.' + extFor(type));
+
+        const pending = turn('ai', 'SmartBudget AI', null);
+
         try {
-            const body = await response.json();
-            return body.message || ('HTTP ' + response.status);
-        } catch {
-            return 'HTTP ' + response.status;
-        }
-    }
+            const r = await fetch(API + '/assistant/audio', { method: 'POST', body: form });
+            if (!r.ok) throw new Error(await errText(r));
+            const data = await r.json();
 
-    async function sendText() {
-        const message = txt.value.trim();
-        if (!message) return;
+            resolve(pending, data.message);
 
-        addMessage('user', 'Você', message);
-        txt.value = '';
-        sendBtn.disabled = true;
-        const pending = addMessage('ai', 'SmartBudget AI', 'pensando…');
+            const tr = document.createElement('div');
+            tr.className = 'aside-transcript';
+            tr.textContent = 'Transcrição: ' + data.transcription;
+            pending.say.appendChild(tr);
 
-        try {
-            const response = await fetch(API + '/assistant/message', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-            if (!response.ok) throw new Error(await readError(response));
-            const data = await response.json();
-            pending.querySelector('p').textContent = data.message;
-        } catch (e) {
-            pending.className = 'msg err';
-            pending.querySelector('p').textContent = e.message;
-        } finally {
-            sendBtn.disabled = false;
-        }
-    }
-
-    sendBtn.onclick = sendText;
-    txt.onkeydown = e => { if (e.key === 'Enter') sendText(); };
-
-    let recorder = null;
-    let chunks = [];
-
-    function extensionFor(mimeType) {
-        if (mimeType.includes('webm')) return 'webm';
-        if (mimeType.includes('ogg')) return 'ogg';
-        if (mimeType.includes('mp4')) return 'mp4';
-        return 'webm';
-    }
-
-    micBtn.onclick = async () => {
-        if (recorder && recorder.state === 'recording') {
-            recorder.stop();
-            return;
-        }
-
-        if (!navigator.mediaDevices || !window.MediaRecorder) {
-            micHint.textContent = 'Este navegador não suporta gravação. Use Chrome ou Edge.';
-            return;
-        }
-
-        let stream;
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch {
-            micHint.textContent = 'Permissão de microfone negada. Libere o acesso e tente de novo.';
-            return;
-        }
-
-        chunks = [];
-        recorder = new MediaRecorder(stream);
-        recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-
-        recorder.onstop = async () => {
-            stream.getTracks().forEach(t => t.stop());
-            micBtn.classList.remove('rec');
-            micBtn.textContent = '🎙️ Gravar comando de voz';
-            micBtn.disabled = true;
-            micHint.textContent = 'Transcrevendo e consultando…';
-
-            const type = recorder.mimeType || 'audio/webm';
-            const blob = new Blob(chunks, { type });
-            const form = new FormData();
-            form.append('file', blob, 'comando.' + extensionFor(type));
-
-            const pending = addMessage('ai', 'SmartBudget AI', 'processando o áudio…');
-
-            try {
-                const response = await fetch(API + '/assistant/audio', { method: 'POST', body: form });
-                if (!response.ok) throw new Error(await readError(response));
-                const data = await response.json();
-
-                pending.querySelector('p').textContent = data.message;
-                const heard = document.createElement('div');
-                heard.className = 'heard';
-                heard.textContent = '🎧 entendi: "' + data.transcription + '"';
-                pending.appendChild(heard);
-
-                if (data.audioBase64) {
-                    const bytes = Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0));
-                    const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }));
-                    const player = document.createElement('audio');
-                    player.controls = true;
-                    player.src = url;
-                    pending.appendChild(player);
-                    player.play().catch(() => {});
-                }
-            } catch (e) {
-                pending.className = 'msg err';
-                pending.querySelector('p').textContent = e.message;
-            } finally {
-                micBtn.disabled = false;
-                micHint.textContent = 'Clique, fale e clique de novo para enviar.';
+            if (data.audioBase64) {
+                const bytes = Uint8Array.from(atob(data.audioBase64), c => c.charCodeAt(0));
+                const player = document.createElement('audio');
+                player.controls = true;
+                player.src = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }));
+                pending.say.appendChild(player);
+                player.play().catch(() => {});
             }
-        };
-
-        recorder.start();
-        micBtn.classList.add('rec');
-        micBtn.textContent = '⏹️ Parar e enviar';
-        micHint.textContent = 'Gravando… fale seu comando.';
+            load();
+        } catch (e) {
+            resolve(pending, e.message, true);
+        } finally {
+            lock(false);
+        }
     };
 
-    (async () => {
-        try {
-            const r = await fetch(API + '/finance/balance');
-            if (!r.ok) throw new Error();
-            const b = await r.json();
-            const saldo = Number(b.netBalance).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            dot.className = 'dot on';
-            statusText.textContent = 'API conectada — saldo atual ' + saldo;
-        } catch {
-            dot.className = 'dot off';
-            statusText.textContent = 'API não respondeu. A aplicação está rodando?';
-        }
-    })();
+    recorder.start();
+    const t0 = Date.now();
+    el('clock').textContent = '0:00';
+    clockId = setInterval(() => {
+        const s = Math.floor((Date.now() - t0) / 1000);
+        el('clock').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }, 250);
+    try { startWave(stream); } catch { }
+    el('recording').classList.add('on');
+    micBtn.classList.add('rec');
+};
+
+const veil = el('veil');
+const abrirAjuda = () => { veil.classList.add('on'); el('helpClose').focus(); };
+const fecharAjuda = () => {
+    veil.classList.remove('on');
+    if (location.hash === '#ajuda') history.replaceState(null, '', location.pathname);
+};
+
+el('helpBtn').onclick = abrirAjuda;
+el('helpClose').onclick = fecharAjuda;
+veil.onclick = e => { if (e.target === veil) fecharAjuda(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && veil.classList.contains('on')) fecharAjuda(); });
+if (location.hash === '#ajuda') abrirAjuda();
+
+window.addEventListener('scroll', tipOff, { passive: true });
+
+load();
+setInterval(load, 30000);
 </script>
 </body>
 </html>
-

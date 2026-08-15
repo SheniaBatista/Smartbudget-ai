@@ -21,6 +21,20 @@ O projeto de referência foi usado como base de requisitos, stack e integração
 
 ---
 
+## Interface
+
+A aplicação serve um console de demonstração em `http://localhost:8081`. Ele consome os mesmos endpoints REST documentados abaixo e existe para tornar o projeto testável sem ferramenta externa.
+
+![Console do SmartBudget AI](docs/dashboard.png)
+
+O saldo lidera a tela, com a evolução acumulada do mês logo abaixo. As despesas aparecem ranqueadas por categoria e as movimentações recentes em seguida. O assistente fica à direita, aceitando texto ou voz.
+
+O botão **Como usar** abre um guia com o fluxo de execução, os comandos reconhecidos, o comportamento diante de informação incompleta e os endpoints REST para quem for avaliar o projeto.
+
+![Guia de uso](docs/ajuda.png)
+
+---
+
 ## Arquitetura
 
 ```mermaid
@@ -234,6 +248,8 @@ src/main/resources/
 ├── prompts/assistant-system.txt
 └── static/index.html                console de demonstração com microfone
 
+docs/                                capturas de tela usadas neste README
+
 src/test/java/com/smartbudget/
 ├── domain · application · infrastructure    testes automatizados
 └── integration/                             testes reais, pulados sem a chave
@@ -294,7 +310,7 @@ Linux / macOS:
 ./gradlew bootRun
 ```
 
-A API sobe em <http://localhost:8081>. Abrir esse endereço no navegador mostra um console de demonstração com microfone.
+A API sobe em <http://localhost:8081>. Abrir esse endereço no navegador mostra o console de demonstração; o botão **Como usar** explica os comandos reconhecidos.
 
 ### 4. Rodar os testes
 
@@ -417,23 +433,33 @@ curl "http://localhost:8081/api/v1/finance/summary?month=2026-08"
 
 ### Console web
 
-Com a aplicação rodando, abra <http://localhost:8081>. A página grava pelo microfone com a API `MediaRecorder`, envia para `POST /assistant/audio`, mostra a transcrição e toca a resposta falada.
+Com a aplicação rodando, abra <http://localhost:8081> e toque no ícone de microfone. A página grava com a API `MediaRecorder`, desenha a forma de onda em tempo real com o `AnalyserNode` da Web Audio, envia para `POST /assistant/audio`, mostra a transcrição e toca a resposta falada.
 
-É um cliente de demonstração: um arquivo estático em `src/main/resources/static/index.html` que consome os mesmos endpoints REST, sem conhecer domínio, casos de uso ou persistência.
+É um cliente de demonstração: um arquivo estático em `src/main/resources/static/index.html`, sem dependências externas, que consome os mesmos endpoints REST e não conhece domínio, casos de uso ou persistência.
 
 ### Terminal
+
+Console de conversa, com painéis de saldo, categorias e extrato:
+
+```powershell
+.\testar.ps1
+```
+
+| Comando | O que faz |
+|---|---|
+| `ajuda` | Guia completo de uso |
+| `saldo` | Receitas, despesas e saldo |
+| `categorias` | Distribuição das despesas |
+| `extrato` | Últimas movimentações |
+| `limpar` · `sair` | Limpa a tela · encerra |
+
+Envio de áudio pelo terminal:
 
 ```powershell
 .\falar.ps1                        # envia o áudio mais recente da pasta
 .\falar.ps1 -Arquivo comando.m4a   # envia um arquivo específico
 .\falar.ps1 -Gravar                # abre o Gravador de Voz do Windows
 .\falar.ps1 -SemVoz                # pula o Text-to-Speech
-```
-
-Para conversar por texto no terminal:
-
-```powershell
-.\testar.ps1
 ```
 
 ### Direto na API

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$Arquivo,
     [switch]$Gravar,
     [switch]$SemVoz,
@@ -6,6 +6,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
+
+$Ink    = "Gray"
+$Muted  = "DarkGray"
+$Accent = "Cyan"
+$Good   = "Green"
+$Bad    = "Red"
 
 $FORMATOS = @(".mp3", ".mp4", ".mpeg", ".mpga", ".m4a", ".wav", ".webm", ".ogg", ".flac")
 
@@ -14,6 +21,33 @@ function Find-AudioMaisRecente {
         Where-Object { $FORMATOS -contains $_.Extension.ToLower() -and $_.Name -notlike "resposta*" } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
+}
+
+function Get-LarguraConsole {
+    try { return [Console]::WindowWidth } catch { return 100 }
+}
+
+function Write-Wrapped([string]$Texto, [string]$Prefixo, [ConsoleColor]$Cor) {
+    $largura = [Math]::Min((Get-LarguraConsole) - $Prefixo.Length - 2, 96)
+    if ($largura -lt 30) { $largura = 30 }
+    $recuo = " " * $Prefixo.Length
+    $primeira = $true
+    $linha = ""
+
+    foreach ($palavra in ($Texto -split "\s+")) {
+        if ($linha.Length -gt 0 -and ($linha.Length + 1 + $palavra.Length) -gt $largura) {
+            Write-Host $(if ($primeira) { $Prefixo } else { $recuo }) -NoNewline -ForegroundColor $Cor
+            Write-Host $linha
+            $primeira = $false
+            $linha = $palavra
+        }
+        elseif ($linha.Length -eq 0) { $linha = $palavra }
+        else { $linha += " " + $palavra }
+    }
+    if ($linha.Length -gt 0) {
+        Write-Host $(if ($primeira) { $Prefixo } else { $recuo }) -NoNewline -ForegroundColor $Cor
+        Write-Host $linha
+    }
 }
 
 function Send-Audio([string]$caminho) {
@@ -45,65 +79,93 @@ function Send-Audio([string]$caminho) {
 
     try {
         $resp = $req.GetResponse()
-        return ((New-Object IO.StreamReader($resp.GetResponseStream(), [Text.Encoding]::UTF8)).ReadToEnd() | ConvertFrom-Json)
+        $texto = (New-Object IO.StreamReader($resp.GetResponseStream(), [Text.Encoding]::UTF8)).ReadToEnd()
+        $resp.Close()
+        return $texto | ConvertFrom-Json
     }
     catch {
         $r = $_.Exception.Response
-        if ($null -eq $r) { throw "A aplicacao nao respondeu. Ela esta rodando? (.\gradlew.bat bootRun)" }
+        if ($null -eq $r) { throw "A aplicação não respondeu. Ela está rodando? (.\gradlew.bat bootRun)" }
         $corpo = (New-Object IO.StreamReader($r.GetResponseStream(), [Text.Encoding]::UTF8)).ReadToEnd()
-        throw "Erro $([int]$r.StatusCode): $corpo"
+        $erro = try { ($corpo | ConvertFrom-Json).message } catch { $corpo }
+        throw $erro
     }
 }
 
+$CAIXA = 48
+
+function Write-BoxLine([string]$Forte, [string]$Fraco) {
+    $pad = $CAIXA - 2 - $Forte.Length - $Fraco.Length
+    if ($pad -lt 0) { $pad = 0 }
+    Write-Host "  │  " -NoNewline -ForegroundColor $Accent
+    Write-Host $Forte -NoNewline -ForegroundColor White
+    Write-Host $Fraco -NoNewline -ForegroundColor $Muted
+    Write-Host ((" " * $pad) + "│") -ForegroundColor $Accent
+}
+
 Write-Host ""
-Write-Host "  SmartBudget AI - teste por voz" -ForegroundColor Cyan
-Write-Host "  ------------------------------" -ForegroundColor Cyan
+Write-Host ("  ╭" + ("─" * $CAIXA) + "╮") -ForegroundColor $Accent
+Write-BoxLine "SmartBudget AI" "  ·  teste por voz"
+Write-Host ("  ╰" + ("─" * $CAIXA) + "╯") -ForegroundColor $Accent
+Write-Host ""
 
 if ($Gravar) {
-    Write-Host ""
-    Write-Host "  Grave seu comando, salve o arquivo nesta pasta e rode: .\falar.ps1" -ForegroundColor Yellow
-    Write-Host "  Pasta: $(Get-Location)"
+    Write-Host "  Grave seu comando, salve nesta pasta e rode " -NoNewline -ForegroundColor $Muted
+    Write-Host ".\falar.ps1" -ForegroundColor $Ink
+    Write-Host "  Pasta: $(Get-Location)" -ForegroundColor $Muted
     Write-Host ""
     try { Start-Process "ms-voicerecorder:" } catch { Start-Process "soundrecorder.exe" -ErrorAction SilentlyContinue }
     return
 }
 
 if ($Arquivo) {
-    if (-not (Test-Path $Arquivo)) { throw "Arquivo nao encontrado: $Arquivo" }
+    if (-not (Test-Path $Arquivo)) { throw "Arquivo não encontrado: $Arquivo" }
     $entrada = (Resolve-Path $Arquivo).Path
 }
 else {
     $encontrado = Find-AudioMaisRecente
     if (-not $encontrado) {
+        Write-Host "  Nenhum arquivo de áudio nesta pasta." -ForegroundColor $Bad
         Write-Host ""
-        Write-Host "  Nenhum arquivo de audio nesta pasta." -ForegroundColor Red
+        Write-Host "    .\falar.ps1 -Gravar   " -NoNewline -ForegroundColor $Ink
+        Write-Host "abre o Gravador de Voz do Windows" -ForegroundColor $Muted
+        Write-Host "    http://localhost:8081 " -NoNewline -ForegroundColor $Ink
+        Write-Host "console web com microfone" -ForegroundColor $Muted
         Write-Host ""
-        Write-Host "    .\falar.ps1 -Gravar        abre o Gravador de Voz do Windows"
-        Write-Host "    http://localhost:8081      console web com microfone"
-        Write-Host ""
-        Write-Host "  Formatos aceitos: $($FORMATOS -join ', ')" -ForegroundColor DarkGray
+        Write-Host "  Formatos aceitos: $($FORMATOS -join ' ')" -ForegroundColor $Muted
         Write-Host ""
         return
     }
     $entrada = $encontrado.FullName
 }
 
-Write-Host "  Arquivo: $([IO.Path]::GetFileName($entrada)) ($([math]::Round((Get-Item $entrada).Length / 1KB)) KB)" -ForegroundColor DarkGray
-Write-Host "  Enviando..." -ForegroundColor Yellow
+$tamanho = [math]::Round((Get-Item $entrada).Length / 1KB)
+Write-Host "  arquivo  " -NoNewline -ForegroundColor $Muted
+Write-Host "$([IO.Path]::GetFileName($entrada)) ($tamanho KB)" -ForegroundColor $Ink
+Write-Host "  enviando" -NoNewline -ForegroundColor $Muted
 
-$resultado = Send-Audio $entrada
+try {
+    $resultado = Send-Audio $entrada
+}
+catch {
+    Write-Host ("`r" + (" " * 24) + "`r") -NoNewline
+    Write-Wrapped $_.Exception.Message "  erro   " $Bad
+    Write-Host ""
+    return
+}
+
+Write-Host ("`r" + (" " * 24) + "`r") -NoNewline
 
 Write-Host ""
-Write-Host "  VOCE DISSE : " -ForegroundColor Green -NoNewline
-Write-Host $resultado.transcription
-Write-Host "  A IA DISSE : " -ForegroundColor Cyan -NoNewline
-Write-Host $resultado.message
+Write-Wrapped $resultado.transcription "  você ▸ " $Good
+Write-Host ""
+Write-Wrapped $resultado.message "  IA   ▸ " $Accent
 Write-Host ""
 
 if ($resultado.audioBase64) {
     $saida = Join-Path (Get-Location) "resposta.mp3"
     [IO.File]::WriteAllBytes($saida, [Convert]::FromBase64String($resultado.audioBase64))
+    Write-Host "  tocando resposta.mp3" -ForegroundColor $Muted
+    Write-Host ""
     Start-Process $saida
 }
-
-Write-Host ""
