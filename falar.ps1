@@ -104,9 +104,9 @@ function Write-BoxLine([string]$Forte, [string]$Fraco) {
 }
 
 Write-Host ""
-Write-Host ("  ╭" + ("─" * $CAIXA) + "╮") -ForegroundColor $Accent
+Write-Host ("  ┌" + ("─" * $CAIXA) + "┐") -ForegroundColor $Accent
 Write-BoxLine "SmartBudget AI" "  ·  teste por voz"
-Write-Host ("  ╰" + ("─" * $CAIXA) + "╯") -ForegroundColor $Accent
+Write-Host ("  └" + ("─" * $CAIXA) + "┘") -ForegroundColor $Accent
 Write-Host ""
 
 if ($Gravar) {
@@ -157,9 +157,9 @@ catch {
 Write-Host ("`r" + (" " * 24) + "`r") -NoNewline
 
 Write-Host ""
-Write-Wrapped $resultado.transcription "  você ▸ " $Good
+Write-Wrapped $resultado.transcription "  você > " $Good
 Write-Host ""
-Write-Wrapped $resultado.message "  IA   ▸ " $Accent
+Write-Wrapped $resultado.message "  IA   > " $Accent
 Write-Host ""
 
 if ($resultado.audioBase64) {

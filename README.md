@@ -33,6 +33,10 @@ O botão **Como usar** abre um guia com o fluxo de execução, os comandos recon
 
 ![Guia de uso](docs/ajuda.png)
 
+O mesmo conteúdo existe no terminal, através do script `testar.ps1`, com painéis de saldo, distribuição por categoria e extrato. O comando `ajuda` exibe o guia completo.
+
+![Console de terminal](docs/terminal.png)
+
 ---
 
 ## Arquitetura

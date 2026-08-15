@@ -181,10 +181,10 @@ function Write-BoxLine([string]$Forte, [string]$Fraco) {
 function Show-Cabecalho {
     Clear-Host
     Write-Host ""
-    Write-Host ("  ╭" + ("─" * $CAIXA) + "╮") -ForegroundColor $Accent
+    Write-Host ("  ┌" + ("─" * $CAIXA) + "┐") -ForegroundColor $Accent
     Write-BoxLine "SmartBudget AI" ""
     Write-BoxLine "" "Assistente financeiro por texto e voz"
-    Write-Host ("  ╰" + ("─" * $CAIXA) + "╯") -ForegroundColor $Accent
+    Write-Host ("  └" + ("─" * $CAIXA) + "┘") -ForegroundColor $Accent
 }
 
 function Show-Ajuda {
@@ -215,11 +215,11 @@ function Write-Par([string]$Esquerda, [string]$Direita) {
 
 function Show-Guia {
     Write-Host ""
-    Write-Host "  ╭────────────────────────────────────────────────╮" -ForegroundColor $Accent
+    Write-Host "  ┌────────────────────────────────────────────────┐" -ForegroundColor $Accent
     Write-Host "  │  " -NoNewline -ForegroundColor $Accent
     Write-Host "Guia de uso" -NoNewline -ForegroundColor White
     Write-Host "                                   │" -ForegroundColor $Accent
-    Write-Host "  ╰────────────────────────────────────────────────╯" -ForegroundColor $Accent
+    Write-Host "  └────────────────────────────────────────────────┘" -ForegroundColor $Accent
 
     Write-Topico "O QUE ACONTECE QUANDO VOCÊ PEDE ALGO"
     Write-Host "    O modelo interpreta a intenção e escolhe qual ferramenta chamar." -ForegroundColor $Muted
@@ -281,7 +281,7 @@ Show-Ajuda
 
 while ($true) {
     Write-Host "você " -NoNewline -ForegroundColor $Good
-    Write-Host "▸ " -NoNewline -ForegroundColor $Muted
+    Write-Host "> " -NoNewline -ForegroundColor $Muted
     $entrada = Read-Host
 
     if ([string]::IsNullOrWhiteSpace($entrada)) { continue }
@@ -296,7 +296,7 @@ while ($true) {
     }
 
     Write-Host " IA  " -NoNewline -ForegroundColor $Accent
-    Write-Host "▸ " -NoNewline -ForegroundColor $Muted
+    Write-Host "> " -NoNewline -ForegroundColor $Muted
     Write-Host "pensando" -NoNewline -ForegroundColor $Muted
 
     $resultado = Invoke-Assistant $entrada
@@ -304,10 +304,10 @@ while ($true) {
     Write-Host ("`r" + (" " * 24) + "`r") -NoNewline
 
     if ($resultado.Ok) {
-        Write-Wrapped $resultado.Texto " IA  ▸ " $Accent
+        Write-Wrapped $resultado.Texto " IA  > " $Accent
     }
     else {
-        Write-Wrapped $resultado.Texto " erro ▸ " $Bad
+        Write-Wrapped $resultado.Texto " erro > " $Bad
     }
     Write-Host ""
 }
