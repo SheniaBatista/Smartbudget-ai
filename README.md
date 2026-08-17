@@ -25,17 +25,17 @@ O projeto de referência foi usado como base de requisitos, stack e integração
 
 A aplicação serve um console de demonstração em `http://localhost:8081`. Ele consome os mesmos endpoints REST documentados abaixo e existe para tornar o projeto testável sem ferramenta externa.
 
-![Console do SmartBudget AI](docs/dashboard.png)
+![Console do SmartBudget AI](docs/screenshot-dashboard.png)
 
 O saldo lidera a tela, com a evolução acumulada do mês logo abaixo. As despesas aparecem ranqueadas por categoria e as movimentações recentes em seguida. O assistente fica à direita, aceitando texto ou voz.
 
 O botão **Como usar** abre um guia com o fluxo de execução, os comandos reconhecidos, o comportamento diante de informação incompleta e os endpoints REST para quem for avaliar o projeto.
 
-![Guia de uso](docs/ajuda.png)
+![Guia de uso](docs/screenshot-guia-de-uso.png)
 
 O mesmo conteúdo existe no terminal, através do script `testar.ps1`, com painéis de saldo, distribuição por categoria e extrato. O comando `ajuda` exibe o guia completo.
 
-![Console de terminal](docs/terminal.png)
+![Console de terminal](docs/screenshot-terminal.png)
 
 ---
 
