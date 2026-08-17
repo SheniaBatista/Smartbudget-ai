@@ -12,7 +12,7 @@ O modelo não persiste nada por conta própria e não calcula valores. Ele escol
 
 ## Desafio DIO
 
-Projeto desenvolvido para concluir a formação no **Bootcamp Santander 2026 — AI Java Back-end**, oferecido pela Digital Innovation One. Corresponde ao desafio final da trilha de Spring Boot:
+Projeto desenvolvido para concluir a formação no **Bootcamp Santander 2026 — AI Java Back-end**, oferecido pela Digital Innovation One.
 
 - Trilha completa: <https://github.com/digitalinnovationone/dio-spring-boot-learning-track>
 - Módulo do projeto final: <https://github.com/digitalinnovationone/dio-spring-boot-learning-track/tree/main/05-spring-ai>
